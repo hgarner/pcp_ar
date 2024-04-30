@@ -1,0 +1,14 @@
+install.packages('devtools');
+install.packages('dplyr');
+install.packages('glmmTMB');
+install.packages('ggplot2');
+install.packages('gridExtra');
+install.packages('ordinal');
+install.packages('lme4');
+install.packages('ggeffects');
+install.packages('emmeans');
+install.packages('gridExtra');
+install.packages('summarytools');
+install.packages("pwrss");
+install.packages("AICcmodavg")
+install.packages('coin');

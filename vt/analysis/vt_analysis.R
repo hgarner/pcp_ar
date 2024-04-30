@@ -354,7 +354,7 @@ p_accuracy_interaction <- ggplot(bin_accuracy_interaction_predicted, aes(x = x, 
     labels = c(-2, -1, 0, 1, 2),
   ) +
   scale_shape_manual(name = 'Means', breaks = c('pred', 'real'), values = shapes_for_means, labels = c('Predicted (inc CI95)', 'Real')) +
-  labs(x = 'Aspect ratio (log scale)', y = 'Proportion of accurate responses (%)', colour = 'Sample size') +
+  labs(x = 'Aspect ratio (log scale)', y = 'Probability of accurate responses (%)', colour = 'Sample size') +
   theme(text = element_text(family = "Times New Roman"));
 
 p_accuracy_interaction;

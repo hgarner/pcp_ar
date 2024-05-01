@@ -438,104 +438,8 @@ webshot2::webshot(url = paste0(tbl_output_dir, 'corr_summary_correct_counts.html
 # modelling response relationships
 ####
 
-# binomial
-
-bin_accuracy <- glmmTMB(
-  as.factor(accuracy_bin) ~ fisher_z*spacing_factor + sample_size_factor + (1|Participant.Public.ID), 
-  data = corr_data,
-  family = 'binomial'
-);
-summary(bin_accuracy);
-bin_accuracy_predicted <- ggpredict(bin_accuracy, terms = c('fisher_z', 'spacing_factor', 'sample_size_factor'));
-p_accuracy <- plot(bin_accuracy_predicted);
-
-# binomial - accuracy within 1
-
-bin_accuracy_1 <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z*spacing_factor + sample_size_factor + (1|Participant.Public.ID), 
-  data = corr_data,
-  family = 'binomial'
-);
-summary(bin_accuracy_1);
-bin_accuracy_1_predicted <- ggpredict(bin_accuracy_1, terms = c('fisher_z', 'spacing_factor', 'sample_size_factor'));
-p_accuracy_1 <- plot(bin_accuracy_1_predicted);
-
 ## add a trial_num_by_size_corr
 corr_data <- corr_data %>% group_by(Participant.Public.ID, sample_size_factor, fisher_z) %>% arrange(Trial.Number, .by_group = TRUE) %>% mutate(trial_num_by_size_corr = 1:n());
-
-# full accuracy
-bin_accuracy_trial <- glmmTMB(
-  as.factor(accuracy_bin) ~ fisher_z*spacing_factor + sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'binomial'
-);
-summary(bin_accuracy_trial);
-bin_accuracy_trial_predicted <- ggpredict(bin_accuracy_trial, terms = c('fisher_z', 'spacing_factor', 'sample_size_factor'));
-p_accuracy_trial <- plot(bin_accuracy_trial_predicted);
-
-# accuracy within 1
-bin_accuracy_1_trial <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z*spacing_factor + sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'binomial'
-);
-summary(bin_accuracy_1_trial);
-bin_accuracy_1_trial_predicted <- ggpredict(bin_accuracy_1_trial, terms = c('fisher_z', 'spacing_factor', 'sample_size_factor'));
-p_accuracy_1_trial <- plot(bin_accuracy_1_trial_predicted);
-
-grid.arrange(p_accuracy, p_accuracy_trial, p_accuracy_1, p_accuracy_1_trial, nrow = 1);
-
-# anova comparison of models
-anova(bin_accuracy, bin_accuracy_trial);
-anova(bin_accuracy_1, bin_accuracy_1_trial);
-
-## full interaction
-bin_accuracy_int <- glmmTMB(
-  as.factor(accuracy_bin) ~ fisher_z_factor*spacing_factor*sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'binomial'
-);
-summary(bin_accuracy_int);
-bin_accuracy_int_predicted <- ggpredict(bin_accuracy_int, terms = c('fisher_z_factor', 'spacing_factor', 'sample_size_factor'));
-p_accuracy_int <- plot(bin_accuracy_int_predicted);
-
-bin_accuracy_1_int_factor <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z_factor*spacing_factor*sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'binomial'
-);
-
-bin_accuracy_1_int <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z*spacing_factor*sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'binomial'
-);
-
-summary(bin_accuracy_1_int_factor);
-bin_accuracy_1_int_predicted <- ggpredict(bin_accuracy_1_int_factor, terms = c('fisher_z_factor', 'spacing_factor', 'sample_size_factor'));
-p_accuracy_1_int <- plot(bin_accuracy_1_int_predicted);
-
-grid.arrange(p_accuracy, p_accuracy_int, p_accuracy_1, p_accuracy_1_int, nrow = 1);
-
-##random effects log likelihood
-## estimate pooled model (drop ranef)
-bin_accuracy_1_int_noref_participant <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z*spacing_factor*sample_size_factor + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'binomial'
-);
-
-# null hypothesis is that pooled model is sufficient
-# if this sig then pooled is insufficient (i.e. ranef required)
-lrtest(bin_accuracy_1_int, bin_accuracy_1_int_noref_participant);
-
-bin_accuracy_1_int_noref_trial <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z*spacing_factor*sample_size_factor + (1|Participant.Public.ID), 
-  data = corr_data,
-  family = 'binomial'
-);
-
-lrtest(bin_accuracy_1_int, bin_accuracy_1_int_noref_trial);
 
 ###
 # ordered beta regression
@@ -641,78 +545,6 @@ pd2 <- position_dodge(width = 0.5);
 # END ordered beta
 ###
 
-###
-# PLOTS - binomial accuracy
-###
-## 
-# plots of predicted
-# push the lines apart slightly
-pd <- position_dodge(width = 0.25);
-pd2 <- position_dodge(width = 0.5);
-# create a summary from corr_data to get the proportion correct as a column
-corr_data_props_correct <- corr_data %>% group_by(fisher_z_factor, spacing_factor, sample_size_factor) %>% summarise(prop_accuracy_bin = sum(accuracy_bin) / n(), prop_accuracy_1_bin = sum(accuracy_1_bin) / n());
-# predicted and actual
-# THIS WORKS
-shapes  <- c('s1' = 23, 's2' = 5);
-plot(bin_accuracy_1_int_predicted) + 
-  geom_point(aes(y = corr_data_props_correct$prop_accuracy_1_bin), position = pd, shape = 'diamond open') +
-  labs(x = 'Fisher-z (real)', y = 'Accuracy within 1 category', colour = 'Aspect ratio') +
-  ggtitle('Predicted mean accuracy (with CI95) by set size');
-# BETTER OPTION - ground-up
-bin_accuracy_1_int_predicted_df <- as.data.frame(bin_accuracy_1_int_predicted);
-shapes_for_means <- c('pred' = 19, 'real' = 9);
-p_accuracy_1_int_real <- ggplot(data = bin_accuracy_1_int_predicted_df, aes(x = x, colour = group)) + 
-  labs(x = 'Fisher-z (real)', y = 'Accuracy within 1 category (%)', colour = 'Aspect ratio') +
-  geom_point(aes(y = predicted * 100, shape = 'pred'), position = pd2) + geom_linerange(aes(ymin = conf.low * 100, ymax = conf.high * 100), position=pd2) + 
-  geom_point(aes(y = corr_data_props_correct$prop_accuracy_1_bin * 100, shape = 'real'), position = pd2) +
-  scale_shape_manual(name = 'Means', breaks = c('pred', 'real'), values = shapes_for_means, labels = c('Predicted (inc CI95)', 'Real')) +
-  facet_grid(rows = c(40, 160)) +
-  #ggtitle('Predicted mean accuracy (with CI95) by set size') +
-  theme(text = element_text(family = "Times New Roman"));
-
-ggsave(
-  p_accuracy_1_int_real, 
-  filename = paste0(tbl_output_dir, 'corr_p_accuracy_1_int_real.png'),
-  width = 2400,
-  height = 2400,
-  units = 'px'
-);
-
-p_accuracy_1_int_real;
-
-plot(bin_accuracy_int_predicted) + 
-  geom_point(aes(y = corr_data_props_correct$prop_accuracy_bin), position = pd, shape = 'diamond open') +
-  labs(x = 'Fisher-z (real)', y = 'Accuracy within 1 category', colour = 'Aspect ratio') +
-  ggtitle('Predicted mean accuracy (with CI95) by set size');
-# BETTER OPTION - ground-up
-bin_accuracy_int_predicted_df <- as.data.frame(bin_accuracy_int_predicted);
-shapes_for_means <- c('pred' = 19, 'real' = 9);
-p_accuracy_int_real <- ggplot(data = bin_accuracy_int_predicted_df, aes(x = x, colour = group)) + 
-  labs(x = 'Fisher-z (real)', y = 'Accuracy within 1 category (%)', colour = 'Aspect ratio') +
-  geom_point(aes(y = predicted * 100, shape = 'pred'), position = pd2) + geom_linerange(aes(ymin = conf.low * 100, ymax = conf.high * 100), position=pd2) + 
-  geom_point(aes(y = corr_data_props_correct$prop_accuracy_bin * 100, shape = 'real'), position = pd2) +
-  scale_shape_manual(name = 'Means', breaks = c('pred', 'real'), values = shapes_for_means, labels = c('Predicted (inc CI95)', 'Real')) +
-  facet_grid(rows = c(40, 160)) +
-  #ggtitle('Predicted mean accuracy (with CI95) by set size') +
-  theme(text = element_text(family = "Times New Roman"));
-
-ggsave(
-  p_accuracy_int_real, 
-  filename = paste0(tbl_output_dir, 'corr_p_accuracy_int_real.png'),
-  width = 2400,
-  height = 2400,
-  units = 'px'
-);
-
-p_accuracy_int_real;
-
-###
-# END PLOTS
-###
-
-anova(bin_accuracy, bin_accuracy_int);
-anova(bin_accuracy_1, bin_accuracy_1_int, bin_accuracy_1_int_factor);
-
 ##################
 ###
 # residuals checks
@@ -726,44 +558,6 @@ plot(res_sim_ob);
 # corr - response models - influence
 ###
 library(influence.ME);
-
-###
-# binomial model of proportion correct
-###
-
-# influence in glmmTMB - requires other methods
-# see https://cran.r-project.org/web/packages/glmmTMB/vignettes/model_evaluation.pdf
-source(system.file("other_methods","influence_mixed.R", package="glmmTMB"));
-###
-# inf for bin_accuracy_1
-###
-bin_accuracy_1_int_influence_time <- system.time(
-  bin_accuracy_1_int_influence <- influence_mixed(bin_accuracy_1_int, groups="Participant.Public.ID")
-);
-car::infIndexPlot(bin_accuracy_1_int_influence);
-inf <- as.data.frame(bin_accuracy_1_int_influence[["fixed.effects[-Participant.Public.ID]"]]);
-inf <- transform(
-  inf,
-  participant=rownames(inf),
-  cooks=cooks.distance(bin_accuracy_1_int_influence)
-);
-inf$ord <- rank(inf$cooks);
-inf <- inf %>% arrange(ord);
-high_cooks <- inf %>% filter (cooks > 0.026) %>% select(participant);
-corr_data_rem_cooks <- corr_data %>% filter(!Participant.Public.ID %in% high_cooks$participant);
-bin_accuracy_1_int_rem_cooks <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z*spacing_factor*sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data_rem_cooks,
-  family = 'binomial'
-);
-bin_accuracy_1_int_factor_rem_cooks <- glmmTMB(
-  as.factor(accuracy_1_bin) ~ fisher_z_factor*spacing_factor*sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data_rem_cooks,
-  family = 'binomial'
-);
-bin_accuracy_1_int_rem_cooks_predicted <- ggpredict(bin_accuracy_1_int_factor_rem_cooks, terms = c('fisher_z', 'spacing_factor', 'sample_size_factor'));
-p_accuracy_1_int_rem_cooks <- plot(bin_accuracy_1_int_rem_cooks_predicted);
-grid.arrange(p_accuracy_1_int, p_accuracy_1_int_rem_cooks);
 
 ###
 # inf for ob_accuracy_int_factor

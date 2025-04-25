@@ -12,3 +12,6 @@ install.packages('summarytools');
 install.packages("pwrss");
 install.packages("AICcmodavg")
 install.packages('coin');
+install.packages('webshot2');
+install.packages('broom.mixed');
+install.packages('gtsummary');

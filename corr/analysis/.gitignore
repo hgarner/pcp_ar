@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.sw*
+*.Rproj
+plots
+*.png
+*.html
+*.tex
+*.svg

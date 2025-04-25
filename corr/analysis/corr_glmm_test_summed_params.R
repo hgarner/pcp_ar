@@ -185,6 +185,7 @@ pairwise_f_results_table %>%
 ###
 # regression model - fit to slope by spacing_factor
 # i.e. testing if rate of change of accuracy by fisher_z varies by spacing_factor
+# NOTE that this is NOT included in the paper but is left in place here for interest
 ###
 # split data into a list of dataframes by sample_size_factor
 full_model_predicted_split_size <- full_model_predicted %>% split(list(.$sample_size_factor))
@@ -429,19 +430,3 @@ ggplot(full_model_predicted %>% filter(sample_size_factor == 160), aes(x = fishe
        linetype = "Fitted LM") +
   
   theme_minimal()
-
-
-################### 
-#### TO REMOVE - TESTING ONLY ###
-
-test_lm <- full_model_predicted %>% filter(sample_size_factor == 40, fisher_z_factor == 1.5) %>% lm(predicted ~ 1, data = .)
-summary(test_lm)
-
-tetest_lm_slope <- full_model_predicted %>% filter(sample_size_factor == 160, spacing_factor == 4) %>% 
-  mutate(fisher_z = as.numeric(levels(fisher_z_factor))[fisher_z_factor]) %>% 
-  mutate(fisher_z_group = ifelse(fisher_z < 0 & sample_size_factor == '160', 0, 1)) %>%
-  lm(predicted ~ fisher_z_group + fisher_z, data = .)
-summary(test_lm_slope)
-coef(test_lm_slope)
-
-#### END TO REMOVE ####

@@ -196,20 +196,6 @@ p_ob_accuracy_int_factor_summary <- model_table(ob_accuracy_int_factor, plot_tit
 
 ### end ob model summary table
 
-# ordered beta but using the response_normalised - this has the advantage of having the same maxima and minima for
-# every real correlation factor
-# BUT this results in the output being less readable - the over/under point will be different for every real corr value
-ob_response_int <- glmmTMB(
-  response_normalised ~ fisher_z_factor*spacing_factor*sample_size_factor + (1|Participant.Public.ID) + (1|trial_num_by_size_corr), 
-  data = corr_data,
-  family = 'ordbeta'
-);
-
-summary(ob_response_int);
-
-ob_response_int_predicted <- ggpredict(ob_response_int, terms = c('fisher_z_factor', 'spacing_factor', 'sample_size_factor'));
-plot(ob_response_int_predicted);
-
 ## plots of ob
 ##
 
@@ -219,7 +205,6 @@ pd2 <- position_dodge(width = 0.5);
 # create a summary from corr_data to get the proportion correct as a column
 corr_data_mean_response <- corr_data %>% group_by(fisher_z, spacing_factor, sample_size_factor) %>% summarise(mean_response = sum(Response) / n(), mean_accuracy_signed_normalised = sum(accuracy_signed_normalised) / n());
 # predicted and actual
-# THIS WORKS
 shapes  <- c('s1' = 23, 's2' = 5);
 shapes_for_means <- c('pred' = 19, 'real' = 9);
 
@@ -272,24 +257,6 @@ ob_accuracy_int_predicted_tab <- as.data.frame(ob_accuracy_int_factor_predicted)
   )
 
 gtsave(ob_accuracy_int_predicted_tab, , filename = paste0(tbl_output_dir, 'ptbl_corr_ob_accuracy_int_predicted_tab', '.tex'));
-
-## response
-# plot of response_normalised (i.e. the actual value given NOT the distance (accuracy))
-p_ob_response_int_real <- as.data.frame(ob_response_int_predicted) %>% mutate(predicted = (predicted * 3) - 1.5, conf.low = (conf.low * 3) - 1.5, conf.high = (conf.high * 3) - 1.5) %>%
-  ggplot(data = ., aes(x = x, colour = group)) + 
-  scale_color_brewer(palette = 'Set2') +
-  labs(x = 'Fisher-z (real)', y = 'Predicted response (Fisher-z)', colour = 'Aspect ratio') +
-  geom_point(aes(y = predicted, shape = 'pred'), position = pd2) + geom_linerange(aes(ymin = conf.low, ymax = conf.high), position=pd2) + 
-  geom_point(aes(y = corr_data_mean_response$mean_response / 2, shape = 'real'), position = pd2) +
-  scale_shape_manual(name = 'Means', breaks = c('pred', 'real'), values = shapes_for_means, labels = c('Predicted (inc CI95)', 'Real')) +
-  facet_grid(rows = c(40, 160)) +
-  #ggtitle('Predicted mean accuracy (with CI95) by set size') +
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  theme(text = element_text(family = "Times New Roman"));
-
-## response
-pd <- position_dodge(width = 0.25);
-pd2 <- position_dodge(width = 0.5);
 
 ###
 # END ordered beta
